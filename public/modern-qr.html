@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Bot de YouTube Shorts - WhatsApp</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #075e54;
+            --secondary-color: #128c7e;
+            --accent-color: #25d366;
+            --light-bg: #f8f9fa;
+            --dark-text: #343a40;
+            --light-text: #f8f9fa;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-bg);
+            color: var(--dark-text);
+        }
+        
+        .header {
+            background-color: var(--primary-color);
+            color: var(--light-text);
+            padding: 20px 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+        
+        .card-header {
+            background-color: var(--light-bg);
+            border-bottom: 1px solid #e9ecef;
+            padding: 15px 20px;
+            font-weight: 600;
+        }
+        
+        .card-body {
+            padding: 25px;
+        }
+        
+        .qr-container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px auto;
+            max-width: 300px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .qr-image {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #e9ecef;
+            padding: 10px;
+            background-color: white;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+        
+        .btn-danger {
+            background-color: #dc3545;
+            border-color: #dc3545;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c82333;
+            border-color: #bd2130;
+        }
+        
+        .btn-success {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+        
+        .btn-success:hover {
+            background-color: #20c45e;
+            border-color: #1eb958;
+        }
+        
+        .status-badge {
+            padding: 8px 15px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        
+        .status-connected {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-connecting {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .connection-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .connection-info i {
+            margin-right: 10px;
+            font-size: 18px;
+        }
+        
+        .connected i {
+            color: #28a745;
+        }
+        
+        .disconnected i {
+            color: #dc3545;
+        }
+        
+        .connecting i {
+            color: #ffc107;
+        }
+        
+        .timestamp {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 10px;
+        }
+        
+        .logs {
+            height: 300px;
+            overflow-y: auto;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #333;
+            border: 1px solid #e9ecef;
+        }
+        
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 5px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+        
+        .log-time {
+            color: #6c757d;
+            margin-right: 10px;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px 0;
+            color: #6c757d;
+            font-size: 14px;
+            margin-top: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .card {
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <div class="d-flex align-items-center justify-content-center">
+                <i class="fab fa-whatsapp fa-2x me-3"></i>
+                <i class="fab fa-youtube fa-2x me-3"></i>
+                <h1 class="mb-0">Bot de YouTube Shorts - WhatsApp</h1>
+            </div>
+        </div>
+    </div>
+
+    <div class="container py-4">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Estado de Conexión</h5>
+                        <div id="status-badge" class="status-badge status-disconnected">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            <span id="status-message">Desconectado</span>
+                        </div>
+                    </div>
+                    <div class="card-body text-center">
+                        <div id="connection-status" class="connection-info disconnected mb-3">
+                            <i class="fas fa-circle"></i>
+                            <span>Desconectado</span>
+                        </div>
+                        
+                        <div id="user-info" style="display: none;" class="mb-3">
+                            <div class="user-card">
+                                <i class="fas fa-user-circle me-2"></i>
+                                <span id="user-name">Usuario WhatsApp</span>
+                                <br>
+                                <small class="text-muted">
+                                    <i class="fas fa-phone me-1"></i>
+                                    <span id="user-phone">+51924319634</span>
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <div id="qr-container" class="qr-container">
+                            <img id="qr-code" class="qr-image" src="" alt="Código QR de WhatsApp">
+                        </div>
+                        
+                        <div class="timestamp">
+                            Última actualización: <span id="timestamp">Cargando...</span>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <button id="refresh-qr" class="btn btn-primary">
+                                <i class="fas fa-sync-alt me-2"></i>Actualizar QR
+                            </button>
+                            <button id="logout" class="btn btn-danger">
+                                <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Registro de Actividad</h5>
+                        <button id="clear-logs" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-trash me-1"></i>Limpiar
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="logs" class="logs">
+                            <div class="log-entry">
+                                <span class="log-time">[00:00:00]</span>
+                                <span>Iniciando Bot de YouTube Shorts...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">Información del Bot</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-users me-2"></i>Grupo Objetivo</h6>
+                        <p id="target-group">Buscando grupo "Block"...</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-video me-2"></i>Último YouTube Short Enviado</h6>
+                        <div id="last-video-info">Ningún YouTube Short enviado aún</div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <button id="send-news" class="btn btn-success" disabled>
+                        <i class="fas fa-paper-plane me-2"></i>Enviar YouTube Short Ahora
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <div class="container">
+            <p>Bot de YouTube Shorts - WhatsApp &copy; 2025</p>
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elementos del DOM
+            const qrImage = document.getElementById('qr-code');
+            const timestampEl = document.getElementById('timestamp');
+            const refreshQrBtn = document.getElementById('refresh-qr');
+            const logoutBtn = document.getElementById('logout');
+            const logsDiv = document.getElementById('logs');
+            const clearLogsBtn = document.getElementById('clear-logs');
+            const sendNewsBtn = document.getElementById('send-news');
+            const statusBadge = document.getElementById('status-badge');
+            const statusMessage = document.getElementById('status-message');
+            const connectionStatus = document.getElementById('connection-status');
+            const targetGroup = document.getElementById('target-group');
+            const lastNews = document.getElementById('last-video-info');
+            
+            // Función para actualizar el timestamp
+            function updateTimestamp() {
+                const now = new Date();
+                const timestamp = now.toLocaleString('es-ES', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+                document.getElementById('timestamp').textContent = timestamp;
+            }
+            
+            // Función para actualizar el último video enviado
+            function updateLastVideoSent(videoData) {
+                const lastVideoElement = document.getElementById('last-video-info');
+                if (lastVideoElement) {
+                    const sentDate = new Date(videoData.sentAt).toLocaleString('es-ES', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    
+                    lastVideoElement.innerHTML = `
+                        <strong>📹 ${videoData.title}</strong><br>
+                        <small>📺 Canal: ${videoData.channelTitle}</small><br>
+                        <small>🏷️ Tema: ${videoData.topic}</small><br>
+                        <small>📅 Enviado: ${sentDate}</small><br>
+                        <div style="margin-top: 8px; padding: 8px; background: #f0f8ff; border-radius: 4px; font-size: 12px;">
+                            ${videoData.description.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}
+                        </div>
+                    `;
+                }
+            }
+            
+            // Añadir log
+            function addLog(message) {
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString();
+                
+                const logEntry = document.createElement('div');
+                logEntry.className = 'log-entry';
+                
+                const timeSpan = document.createElement('span');
+                timeSpan.className = 'log-time';
+                timeSpan.textContent = '[' + timeStr + ']';
+                
+                const messageSpan = document.createElement('span');
+                messageSpan.textContent = ' ' + message;
+                
+                logEntry.appendChild(timeSpan);
+                logEntry.appendChild(messageSpan);
+                logsDiv.appendChild(logEntry);
+                logsDiv.scrollTop = logsDiv.scrollHeight;
+            }
+            
+            // Variable para controlar actualizaciones de QR
+            let lastQrUpdate = 0;
+            
+            // Verificar si hay QR disponible
+            function updateQR() {
+                fetch('/qr')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.qr) {
+                            document.getElementById('qr-code').src = data.qr;
+                            document.getElementById('qr-container').style.display = 'block';
+                            addLog('Código QR actualizado');
+                        } else {
+                            addLog('No hay código QR disponible');
+                        }
+                    })
+                    .catch(error => {
+                        addLog('Error al obtener QR: ' + error);
+                    });
+            }
+
+            // Conectar a Server-Sent Events para actualizaciones en tiempo real
+            function connectSSE() {
+                const eventSource = new EventSource('/events');
+                
+                eventSource.onopen = function() {
+                    addLog('📡 Conectado a actualizaciones en tiempo real');
+                };
+                
+                eventSource.addEventListener('qr-update', function(event) {
+                    const data = JSON.parse(event.data);
+                    if (data.qr) {
+                        qrImage.src = data.qr;
+                        document.getElementById('qr-container').style.display = 'block';
+                        updateTimestamp();
+                        addLog('📱 Nuevo QR recibido automáticamente');
+                    }
+                });
+                
+                eventSource.addEventListener('session-closed', function(event) {
+                    const data = JSON.parse(event.data);
+                    addLog('🔓 ' + data.message);
+                    // Mostrar contenedor QR para el nuevo código
+                    document.getElementById('qr-container').style.display = 'block';
+                    document.getElementById('user-info').style.display = 'none';
+                });
+                
+                eventSource.addEventListener('connection', function(event) {
+                    const data = JSON.parse(event.data);
+                    if (data.status === 'connected' && data.user) {
+                        document.getElementById('user-info').style.display = 'block';
+                        document.getElementById('qr-container').style.display = 'none';
+                        
+                        // Actualizar información del usuario en la UI
+                        document.getElementById('user-name').textContent = data.user.name;
+                        document.getElementById('user-phone').textContent = '+' + data.user.phone;
+                        
+                        addLog('✅ Conectado como: ' + data.user.name);
+                    } else if (data.qr) {
+                        // Si hay QR en el estado inicial, mostrarlo
+                        qrImage.src = data.qr;
+                        document.getElementById('qr-container').style.display = 'block';
+                        updateTimestamp();
+                        addLog('📱 QR inicial cargado via SSE');
+                    }
+                });
+                
+                eventSource.addEventListener('user-connected', function(event) {
+                    const data = JSON.parse(event.data);
+                    if (data.status === 'connected' && data.user) {
+                        document.getElementById('user-info').style.display = 'block';
+                        document.getElementById('qr-container').style.display = 'none';
+                        
+                        // Actualizar información del usuario en la UI
+                        document.getElementById('user-name').textContent = data.user.name;
+                        document.getElementById('user-phone').textContent = '+' + data.user.phone;
+                        
+                        addLog('✅ Conectado como: ' + data.user.name);
+                    }
+                });
+                
+                // Escuchar eventos de video enviado
+                eventSource.addEventListener('video-sent', function(event) {
+                    console.log('🎬 Evento video-sent recibido:', event.data);
+                    try {
+                        const data = JSON.parse(event.data);
+                        updateLastVideoSent(data);
+                        addLog(`📹 Video enviado: ${data.title}`);
+                        console.log('✅ Video actualizado en interfaz');
+                    } catch (error) {
+                        console.error('❌ Error procesando evento video-sent:', error);
+                        addLog('❌ Error actualizando último video');
+                    }
+                });
+                
+                eventSource.onerror = function(error) {
+                    setTimeout(() => {
+                        connectSSE();
+                    }, 30000);
+                };
+            }
+            
+            // Verificar si hay QR disponible
+            function checkQrAvailability() {
+                fetch('/qr')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && data.qr) {
+                            qrImage.src = data.qr;
+                            updateTimestamp();
+                        } else {
+                            // Intentar nuevamente en 10 segundos si no hay QR disponible
+                            setTimeout(checkQrAvailability, 10000);
+                        }
+                    })
+                    .catch(error => {
+                        // Intentar nuevamente en 15 segundos si hay error
+                        setTimeout(checkQrAvailability, 15000);
+                    });
+            }
+            
+            function updateQR(force = false) {
+                const now = Date.now();
+                // Solo registrar la actualización cada 30 segundos o si es forzada
+                if (force || now - lastQrUpdate > 30000) {
+                    addLog('Actualizando código QR');
+                    lastQrUpdate = now;
+                }
+                
+                fetch('/qr')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && data.qr) {
+                            qrImage.src = data.qr;
+                            updateTimestamp();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error al actualizar QR:', error);
+                    });
+            }
+            
+            // Variables para controlar actualizaciones repetitivas
+            let lastStatus = null;
+            let lastUserPhone = null;
+            
+            // Verificar si el usuario está conectado y ocultar el QR
+            function checkAndHideQR() {
+                if (lastStatus === 'connected') {
+                    // Ocultar el QR y los botones relacionados
+                    document.getElementById('qr-container').style.display = 'none';
+                    document.getElementById('refresh-qr').style.display = 'none';
+                    
+                    // Detener las actualizaciones del QR
+                    if (window.qrUpdateInterval) {
+                        clearInterval(window.qrUpdateInterval);
+                        window.qrUpdateInterval = null;
+                    }
+                }
+            }
+            
+            // Actualizar estado de conexión
+            function updateConnectionStatus() {
+                fetch('/status')
+                    .then(response => response.json())
+                    .then(data => {
+                        // Actualizar badge de estado solo si cambió
+                        const statusChanged = lastStatus !== data.status;
+                        lastStatus = data.status;
+                        
+                        // Verificar si debemos ocultar el QR
+                        if (data.status === 'connected') {
+                            checkAndHideQR();
+                        }
+                        
+                        statusBadge.className = 'status-badge';
+                        connectionStatus.className = 'connection-info';
+                        
+                        switch(data.status) {
+                            case 'connected':
+                                statusBadge.classList.add('status-connected');
+                                statusMessage.textContent = 'Conectado';
+                                connectionStatus.classList.add('connected');
+                                connectionStatus.innerHTML = '<i class="fas fa-circle"></i><span>Conectado</span>';
+                                sendNewsBtn.disabled = false;
+                                
+                                // Ocultar el QR cuando está conectado
+                                document.getElementById('qr-container').style.display = 'none';
+                                document.getElementById('refresh-qr').style.display = 'none';
+                                
+                                // Ocultar también el botón de actualizar QR
+                                const refreshBtn = document.querySelector('.btn-primary');
+                                if (refreshBtn) refreshBtn.style.display = 'none';
+                                
+                                // Detener las actualizaciones del QR
+                                if (window.qrUpdateInterval) {
+                                    clearInterval(window.qrUpdateInterval);
+                                    window.qrUpdateInterval = null;
+                                }
+                                
+                                // Mostrar información del usuario solo si es nueva
+                                if (data.user) {
+                                    const userPhone = data.user.phone || '';
+                                    if (lastUserPhone !== userPhone || statusChanged) {
+                                        lastUserPhone = userPhone;
+                                        addLog(`Conectado como: ${data.user.name} (${userPhone || 'Sin teléfono'})`);
+                                    }
+                                    
+                                    document.getElementById('user-info').innerHTML = `
+                                        <div class="alert alert-success">
+                                            <i class="fas fa-user me-2"></i>
+                                            <strong>${data.user.name}</strong>
+                                            ${data.user.phone ? `<span class="ms-2">(+${data.user.phone})</span>` : ''}
+                                            <div class="small text-muted">Conectado desde: ${new Date(data.user.connected_at).toLocaleString()}</div>
+                                        </div>
+                                    `;
+                                    document.getElementById('user-info').style.display = 'block';
+                                }
+                                break;
+                                
+                            case 'disconnected':
+                                statusBadge.classList.add('status-disconnected');
+                                statusMessage.textContent = 'Desconectado';
+                                connectionStatus.classList.add('disconnected');
+                                connectionStatus.innerHTML = '<i class="fas fa-circle"></i><span>Desconectado</span>';
+                                sendNewsBtn.disabled = true;
+                                document.getElementById('user-info').style.display = 'none';
+                                break;
+                                
+                            case 'connecting':
+                                statusBadge.classList.add('status-connecting');
+                                statusMessage.textContent = 'Conectando...';
+                                connectionStatus.classList.add('connecting');
+                                connectionStatus.innerHTML = '<i class="fas fa-circle"></i><span>Conectando...</span>';
+                                sendNewsBtn.disabled = true;
+                                document.getElementById('user-info').style.display = 'none';
+                                break;
+                                
+                            case 'qr_ready':
+                                statusBadge.classList.add('status-connecting');
+                                statusMessage.textContent = 'Esperando escaneo';
+                                connectionStatus.classList.add('connecting');
+                                connectionStatus.innerHTML = '<i class="fas fa-qrcode"></i><span>Esperando escaneo del QR</span>';
+                                sendNewsBtn.disabled = true;
+                                document.getElementById('user-info').style.display = 'none';
+                                break;
+                        }
+                        
+                        // Actualizar información del grupo
+                        if (data.targetGroup) {
+                            targetGroup.textContent = data.targetGroup.name;
+                        } else {
+                            targetGroup.textContent = 'Buscando grupo "Block"...';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error al obtener estado:', error);
+                        addLog('Error al obtener estado de conexión');
+                    });
+            }
+            
+            // Event listeners
+            refreshQrBtn.addEventListener('click', function() {
+                // Deshabilitar el botón mientras se procesa
+                this.disabled = true;
+                addLog('Solicitando nuevo código QR...');
+                
+                fetch('/refresh-qr')
+                    .then(response => response.json())
+                    .then(data => {
+                        addLog('Solicitud de nuevo QR enviada correctamente');
+                        
+                        // Actualizar una sola vez
+                        updateQR();
+                        setTimeout(() => {
+                            this.disabled = false;
+                        }, 3000);
+                    })
+                    .catch(error => {
+                        addLog('Error al solicitar nuevo QR: ' + error);
+                        this.disabled = false;
+                    });
+            });
+            
+            logoutBtn.addEventListener('click', function() {
+                if (confirm('¿Estás seguro que deseas cerrar la sesión de WhatsApp?')) {
+                    fetch('/logout', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            addLog('Cerrando sesión de WhatsApp');
+                            
+                            // Mostrar el contenedor del QR si está oculto
+                            document.getElementById('qr-container').style.display = 'block';
+                            document.getElementById('refresh-qr').style.display = 'block';
+                            
+                            // Ocultar la información del usuario
+                            document.getElementById('user-info').style.display = 'none';
+                            
+                            // Iniciar verificación del nuevo QR
+                            setTimeout(() => {
+                                checkQrAvailability();
+                                updateQR(true);
+                            }, 5000);
+                        })
+                        .catch(error => {
+                            addLog('Error al cerrar sesión: ' + error);
+                        });
+                }
+            });
+            
+            clearLogsBtn.addEventListener('click', function() {
+                logsDiv.innerHTML = '';
+                addLog('Registro de actividad limpiado');
+            });
+            
+            sendNewsBtn.addEventListener('click', function() {
+                this.disabled = true;
+                addLog('Buscando y enviando YouTube Short al grupo Block...');
+                
+                // Mostrar indicador de carga
+                const originalText = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Enviando...';
+                
+                fetch('/send-youtube-short', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Mostrar información del video enviado
+                            const videoInfo = data.video;
+                            addLog(`YouTube Short enviado correctamente al grupo Block`);
+                            addLog(`Canal: ${videoInfo.username}`);
+                            addLog(`Título: ${videoInfo.description}`);
+                            addLog(`URL: ${videoInfo.url}`);
+                            
+                            // Actualizar el último short enviado
+                            const description = videoInfo.description || videoInfo.title || 'Sin descripción disponible';
+                            document.getElementById('last-news').innerHTML = `
+                                <strong>${videoInfo.username || 'Canal desconocido'}</strong>: ${description.substring(0, 100)}${description.length > 100 ? '...' : ''}
+                                <br><small class="text-muted">Enviado: ${new Date().toLocaleTimeString()}</small>
+                            `;
+                        } else {
+                            addLog(`Error: ${data.error || 'Error desconocido'}`);
+                        }
+                        
+                        // Restaurar el botón después de 3 segundos
+                        setTimeout(() => {
+                            this.disabled = false;
+                            this.innerHTML = originalText;
+                        }, 3000);
+                    })
+                    .catch(error => {
+                        addLog(`Error al enviar YouTube Short: ${error.message || error}`);
+                        this.disabled = false;
+                        this.innerHTML = originalText;
+                    });
+            });
+            
+            // Inicialización
+            updateTimestamp();
+            addLog('Interfaz web iniciada');
+            
+            // Cargar QR inmediatamente al iniciar
+            updateQR(true);
+            
+            // Iniciar verificación de disponibilidad del QR como respaldo
+            setTimeout(() => {
+                checkQrAvailability();
+            }, 500);
+            
+            // Actualizar estado de conexión inmediatamente y luego cada 5 segundos
+            updateConnectionStatus();
+            window.statusUpdateInterval = setInterval(updateConnectionStatus, 5000);
+            
+            // NO actualizar QR automáticamente - solo manual
+            
+            // NO regenerar automáticamente - solo manual
+            
+            // Conectar a Server-Sent Events para actualizaciones en tiempo real
+            connectSSE();
+        });
+    </script>
+</body>
+</html>

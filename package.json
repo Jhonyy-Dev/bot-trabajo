@@ -1,0 +1,32 @@
+{
+  "name": "job-offers-whatsapp-bot",
+  "version": "2.0.0",
+  "description": "WhatsApp bot that sends tech job offers using hybrid multi-API system (JSearch, RemoteOK, Arbeitnow, USAJOBS)",
+  "main": "modern-qr-server.js",
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "scripts": {
+    "start": "node modern-qr-server.js",
+    "server": "node modern-qr-server.js",
+    "test-jobs": "node test-job-search.js",
+    "whatsapp": "node whatsapp.js"
+  },
+  "dependencies": {
+    "@google/genai": "^1.19.0",
+    "@google/generative-ai": "^0.21.0",
+    "@whiskeysockets/baileys": "^6.5.0",
+    "axios": "^1.6.2",
+    "cheerio": "^1.1.2",
+    "dotenv": "^16.3.1",
+    "express": "^4.21.2",
+    "mime": "^4.0.7",
+    "node-cache": "^5.1.2",
+    "node-cron": "^3.0.3",
+    "node-fetch": "^2.7.0",
+    "pino": "^8.16.2",
+    "qrcode": "^1.5.4",
+    "qrcode-terminal": "^0.12.0"
+  }
+}
