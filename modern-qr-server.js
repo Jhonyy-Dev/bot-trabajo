@@ -163,9 +163,9 @@ async function initializeWhatsApp() {
       auth: state,
       logger: P({ level: 'fatal' }),
       printQRInTerminal: false,
-      connectTimeoutMs: 60000,
-      defaultQueryTimeoutMs: 60000,
-      keepAliveIntervalMs: 60000,
+      connectTimeoutMs: 20000,        // 20s (default de Baileys)
+      defaultQueryTimeoutMs: 60000,   // 60s para queries
+      keepAliveIntervalMs: 25000,     // 25s - pings más frecuentes para mantener conexión estable
       markOnlineOnConnect: false,
       syncFullHistory: false,
       fireInitQueries: false,

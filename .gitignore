@@ -32,6 +32,7 @@ tmp/
 # Archivos de scheduler (generados en runtime)
 jobs_sent.json
 video_schedule.json
+job_schedule.json
 
 # IDE/Editor
 .vscode/

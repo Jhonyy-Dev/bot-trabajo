@@ -278,8 +278,21 @@ class JobSchedulerService {
   async sendJobWithRetry(groupId, sendFunction) {
     const canSendResult = await this.canSendJob(groupId);
     if (!canSendResult.canSend) {
+      this.log('info', canSendResult.message, { 
+        groupId,
+        reason: canSendResult.reason,
+        remainingHours: canSendResult.remainingHours,
+        nextAllowedTime: canSendResult.nextAllowedTime
+      });
       return false;
     }
+    
+    // Log cuando SÍ puede enviar
+    this.log('info', canSendResult.message, {
+      groupId,
+      reason: canSendResult.reason,
+      hoursWaited: canSendResult.hoursWaited
+    });
 
     if (this.circuitBreaker.isOpen && Date.now() < this.circuitBreaker.nextAttempt) {
       return false;
@@ -339,10 +352,12 @@ class JobSchedulerService {
   async checkAndSendJob() {
     try {
       if (!global.waSocket) {
+        this.log('debug', '⏸️ Scheduler check skipped - WhatsApp no conectado');
         return;
       }
 
       const groupId = process.env.TARGET_GROUP_NAME || 'Club Dev Maval';
+      this.log('debug', '🔍 Verificando si debe enviar oferta laboral...', { groupId });
       
       await this.sendJobWithRetry(groupId, async () => {
         await this.executeJobSend();
