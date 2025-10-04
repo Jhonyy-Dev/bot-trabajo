@@ -85,6 +85,8 @@ const server = http.createServer(app);
 const PORT = process.env.PORT || 3000;
 
 // Array para almacenar conexiones SSE
+let sseClients = [];
+
 // Middleware
 app.use(express.json());
 app.use(express.static('public'));
