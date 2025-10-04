@@ -11,8 +11,11 @@ class JobSchedulerService {
     this.INTERVAL_MS = 12 * 60 * 60 * 1000; // 12 HORAS EXACTAS
     this.CHECK_INTERVAL = 15 * 60 * 1000; // Verificar cada 15 minutos
     this.CLEANUP_INTERVAL = 24 * 60 * 60 * 1000; // Limpiar cada 24 horas
-    this.configFile = path.join(process.cwd(), 'job_schedule.json');
-    this.sentJobsFile = path.join(process.cwd(), 'jobs_sent.json');
+    
+    // Usar /data si existe (Railway Volume), sino usar directorio actual
+    const dataDir = require('fs').existsSync('/data') ? '/data' : process.cwd();
+    this.configFile = path.join(dataDir, 'job_schedule.json');
+    this.sentJobsFile = path.join(dataDir, 'jobs_sent.json');
     this.retryAttempts = 3;
     this.circuitBreaker = { failures: 0, isOpen: false, nextAttempt: 0 };
     this.lastCleanup = 0;

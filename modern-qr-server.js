@@ -352,7 +352,7 @@ async function initializeWhatsApp() {
                   try {
                     const status = await getJobSchedulerStatus();
                     
-                    if (status && status.canSendNow) {
+                    if (status && status.canSend) {
                       console.log('🚀 Enviando primera oferta laboral...');
                       await jobScheduler.manualSend();
                       console.log('✅ Primera oferta enviada - Próximo envío en 12 horas');
