@@ -354,7 +354,7 @@ async function initializeWhatsApp() {
                     
                     if (status && status.canSend) {
                       console.log('🚀 Enviando primera oferta laboral...');
-                      await jobScheduler.manualSend();
+                      await jobScheduler.checkAndSendJob();
                       console.log('✅ Primera oferta enviada - Próximo envío en 12 horas');
                     } else {
                       const nextTime = status?.nextAllowedTime || 'desconocido';
