@@ -1,7 +1,15 @@
 {
+  "Club Dev Maval": {
+    "lastSend": 1759544401880,
+    "utcDate": "2025-10-04T02:20:01.880Z",
+    "nextAllowed": 1759587601880,
+    "nextAllowedDate": "2025-10-04T14:20:01.880Z",
+    "currentCategory": "BACKEND",
+    "totalSent": 1
+  },
   "_metadata": {
-    "lastCleanup": 1759460657313,
-    "lastCleanupDate": "2025-10-03T03:04:17.313Z",
-    "totalEntriesRemoved": 0
+    "lastCleanup": 1759544401880,
+    "createdAt": 1759544401880,
+    "version": "2.0-jobs"
   }
 }
