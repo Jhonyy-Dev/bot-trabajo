@@ -24,6 +24,11 @@ class JobSchedulerService {
     this.jobCategories = ['FRONTEND', 'BACKEND', 'MOBILE', 'DATABASE', 'DATA_ANALYST', 'CYBERSECURITY'];
     this.currentCategoryIndex = 0;
     
+    // Ubicaciones en rotación circular
+    const envLocations = process.env.JOB_LOCATIONS?.split(',').map(l => l.trim()) || ['remote'];
+    this.jobLocations = envLocations.length > 0 ? envLocations : ['remote'];
+    this.currentLocationIndex = 0;
+    
     JobSchedulerService.instance = this;
     this.startScheduler();
     this.startCleanupScheduler();
@@ -381,16 +386,19 @@ class JobSchedulerService {
       const currentCategory = this.jobCategories[this.currentCategoryIndex];
       console.log(`🎯 Categoría actual [${this.currentCategoryIndex + 1}/${this.jobCategories.length}]: ${currentCategory}`);
       
-      // Avanzar al siguiente índice
+      // Rotación circular de ubicaciones
+      const currentLocation = this.jobLocations[this.currentLocationIndex];
+      console.log(`🌍 Ubicación actual [${this.currentLocationIndex + 1}/${this.jobLocations.length}]: ${currentLocation}`);
+      
+      // Avanzar índices para próximo envío
       this.currentCategoryIndex = (this.currentCategoryIndex + 1) % this.jobCategories.length;
+      this.currentLocationIndex = (this.currentLocationIndex + 1) % this.jobLocations.length;
       
       // Configuración de búsqueda desde .env
       const searchRemote = process.env.SEARCH_REMOTE_ONLY === 'true';
-      const locations = process.env.JOB_LOCATIONS?.split(',') || ['remote'];
-      const primaryLocation = locations[0];
       
       // Buscar ofertas
-      const jobs = await searchJobOffers(currentCategory, primaryLocation, searchRemote);
+      const jobs = await searchJobOffers(currentCategory, currentLocation, searchRemote);
       
       if (!jobs || jobs.length === 0) {
         throw new Error('No se encontraron ofertas laborales para esta categoría');
