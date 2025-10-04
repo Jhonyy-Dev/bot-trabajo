@@ -30,7 +30,6 @@ tmp/
 .cache/
 
 # Archivos de scheduler (generados en runtime)
-job_schedule.json
 jobs_sent.json
 video_schedule.json
 

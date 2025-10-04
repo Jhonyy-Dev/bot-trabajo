@@ -36,12 +36,17 @@ class JobSchedulerService {
 
   async getScheduleData() {
     try {
+      // Primero intentar leer desde archivo
       const data = await fs.readFile(this.configFile, 'utf8');
       const schedule = JSON.parse(data);
       await this.cleanupOldEntries(schedule);
       return schedule;
     } catch (error) {
-      return {};
+      // Si falla, usar memoria en proceso (fallback para Railway sin Volume)
+      if (!global.jobScheduleMemory) {
+        global.jobScheduleMemory = {};
+      }
+      return global.jobScheduleMemory;
     }
   }
 
@@ -56,8 +61,15 @@ class JobSchedulerService {
         }
       };
       
-      await fs.writeFile(this.configFile, JSON.stringify(dataToSave, null, 2));
-      this.log('debug', 'Schedule data saved successfully');
+      // Intentar guardar en archivo primero
+      try {
+        await fs.writeFile(this.configFile, JSON.stringify(dataToSave, null, 2));
+        this.log('debug', 'Schedule data saved to file');
+      } catch (fileError) {
+        // Fallback: Guardar en memoria global (para Railway sin Volume)
+        global.jobScheduleMemory = dataToSave;
+        this.log('warn', 'File save failed, using memory fallback', { error: fileError.message });
+      }
     } catch (error) {
       this.log('error', 'Error saving schedule data', { error: error.message });
       throw error;
@@ -69,7 +81,11 @@ class JobSchedulerService {
       const data = await fs.readFile(this.sentJobsFile, 'utf8');
       return JSON.parse(data);
     } catch (error) {
-      return { jobs: [], _metadata: { totalSent: 0 } };
+      // Fallback: usar memoria global
+      if (!global.sentJobsMemory) {
+        global.sentJobsMemory = { jobs: [], _metadata: { totalSent: 0 } };
+      }
+      return global.sentJobsMemory;
     }
   }
 
@@ -95,7 +111,13 @@ class JobSchedulerService {
         lastSentAt: new Date().toISOString()
       };
 
-      await fs.writeFile(this.sentJobsFile, JSON.stringify(sentJobs, null, 2));
+      try {
+        await fs.writeFile(this.sentJobsFile, JSON.stringify(sentJobs, null, 2));
+      } catch (fileError) {
+        // Fallback: guardar en memoria
+        global.sentJobsMemory = sentJobs;
+        this.log('warn', 'Jobs file save failed, using memory', { error: fileError.message });
+      }
       this.log('info', 'Job registered in sent history', { 
         title: jobData.title,
         company: jobData.company 
