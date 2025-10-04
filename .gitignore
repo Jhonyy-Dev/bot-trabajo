@@ -5,6 +5,17 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+
+# SO
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Archivos de respaldo
+*.backup
+*.bak
+*~
+
 # WhatsApp Baileys (credenciales y estado de sesión)
 auth/
 
@@ -18,18 +29,13 @@ logs/
 tmp/
 .cache/
 
+# Archivos de scheduler (generados en runtime)
+job_schedule.json
+jobs_sent.json
+video_schedule.json
+
 # IDE/Editor
 .vscode/
 .idea/
 *.swp
 *.swo
-
-# SO
-.DS_Store
-Thumbs.db
-desktop.ini
-
-# Archivos de respaldo
-*.backup
-*.bak
-*~

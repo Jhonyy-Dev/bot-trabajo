@@ -85,27 +85,21 @@ const server = http.createServer(app);
 const PORT = process.env.PORT || 3000;
 
 // Array para almacenar conexiones SSE
-let sseClients = [];
-
 // Middleware
 app.use(express.json());
 app.use(express.static('public'));
 
-// Variables globales
+// Variables globales para el estado de WhatsApp
 let sock = null;
+let qrString = '';
 let isReady = false;
 let connectionStatus = 'disconnected';
-let qrString = '';
-let connectedUser = null;
-let authState = null;
 let qrGeneratedAt = null;
 let qrTimeout = null;
-
-// Variables para evitar repeticiones
-let sentVideos = []; // IDs de videos enviados recientemente
-let sentChannels = []; // IDs de canales enviados recientemente
-const MAX_SENT_VIDEOS_MEMORY = 50; // Recordar últimos 50 videos
-const MAX_SENT_CHANNELS_MEMORY = 10; // Recordar últimos 10 canales
+let connectedUser = null;
+let isReconnecting = false; // Prevenir reconexiones múltiples
+let reconnectAttempts = 0;
+const MAX_RECONNECT_ATTEMPTS = 5;
 
 // Variable para prevenir envíos simultáneos
 let isCurrentlySending = false;
@@ -221,36 +215,64 @@ async function initializeWhatsApp() {
         
         // Limpiar referencia global inmediatamente
         global.waSocket = null;
+        isReady = false;
+        connectionStatus = 'disconnected';
         
-        if (shouldReconnect) {
-          console.log('🔄 Reconectando WhatsApp en 10 segundos...');
+        // Evitar reconexiones múltiples simultáneas
+        if (isReconnecting) {
+          console.log('⏳ Ya hay una reconexión en progreso, ignorando...');
+          return;
+        }
+        
+        if (shouldReconnect && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+          isReconnecting = true;
+          reconnectAttempts++;
+          
+          const delay = Math.min(10000 * reconnectAttempts, 30000); // Max 30 segundos
+          console.log(`🔄 Reconectando WhatsApp en ${delay/1000} segundos... (intento ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`);
+          
+          setTimeout(() => {
+            isReconnecting = false;
+            initializeWhatsApp();
+          }, delay);
+        } else if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+          console.log('❌ Máximo de intentos de reconexión alcanzado. Esperando 5 minutos...');
+          reconnectAttempts = 0;
+          isReconnecting = false;
+          
           setTimeout(() => {
             initializeWhatsApp();
-          }, 10000); // Esperar 10 segundos antes de reconectar
+          }, 300000); // 5 minutos
         } else {
           connectionStatus = 'disconnected';
-          isReady = false;
           connectedUser = null;
           qrString = '';
+          reconnectAttempts = 0;
+          isReconnecting = false;
           
-          cleanAuthFiles();
+          console.log('🚪 Sesión cerrada por el usuario');
           broadcastSSE('session-closed', { message: 'Sesión cerrada desde celular' });
           
+          // Reiniciar después de 30 segundos
           setTimeout(async () => {
             try {
               await initializeWhatsApp();
             } catch (error) {
-              // Silencioso
+              console.log('Error reiniciando:', error.message);
             }
-          }, 15000);
+          }, 30000);
         }
       } else if (connection === 'open') {
         isReady = true;
         connectionStatus = 'connected';
         qrString = '';
+        reconnectAttempts = 0; // Reset contador en conexión exitosa
+        isReconnecting = false;
         
         // Establecer referencia global inmediatamente
         global.waSocket = sock;
+        
+        console.log('✅ WhatsApp conectado exitosamente');
         
         // Limpiar timeout de QR ya que se conectó exitosamente
         if (qrTimeout) {
@@ -319,25 +341,30 @@ async function initializeWhatsApp() {
               // Establecer referencia global para el JobScheduler
               global.waSocket = sock;
               
-              // Verificar si ya es tiempo de enviar una oferta
-              console.log('✅ WhatsApp conectado - Verificando scheduler de ofertas laborales...');
-              
-              setTimeout(async () => {
-                try {
-                  const status = await getJobSchedulerStatus();
-                  
-                  if (status && status.canSendNow) {
-                    console.log('🚀 Enviando primera oferta laboral...');
-                    await jobScheduler.manualSend();
-                    console.log('✅ Primera oferta enviada - Próximo envío en 12 horas');
-                  } else {
-                    const nextTime = status?.nextAllowedTime || 'desconocido';
-                    console.log(`⏰ Próxima oferta programada para: ${nextTime}`);
+              // Verificar si ya es tiempo de enviar una oferta (solo en primera conexión)
+              if (!global.hasConnectedBefore) {
+                console.log('✅ Primera conexión - Verificando scheduler de ofertas laborales...');
+                global.hasConnectedBefore = true;
+                
+                setTimeout(async () => {
+                  try {
+                    const status = await getJobSchedulerStatus();
+                    
+                    if (status && status.canSendNow) {
+                      console.log('🚀 Enviando primera oferta laboral...');
+                      await jobScheduler.manualSend();
+                      console.log('✅ Primera oferta enviada - Próximo envío en 12 horas');
+                    } else {
+                      const nextTime = status?.nextAllowedTime || 'desconocido';
+                      console.log(`⏰ Próxima oferta programada para: ${nextTime}`);
+                    }
+                  } catch (error) {
+                    console.error('❌ Error verificando scheduler:', error.message);
                   }
-                } catch (error) {
-                  console.error('❌ Error verificando scheduler:', error.message);
-                }
-              }, 3000);
+                }, 3000);
+              } else {
+                console.log('✅ Reconectado - Scheduler activo en segundo plano');
+              }
             }
           } catch (userError) {
             console.log('❌ Error obteniendo información de usuario:', userError.message);
