@@ -372,12 +372,24 @@ function filterJobsByLocation(jobs, allowedCountries) {
   return jobs.filter(job => {
     const location = (job.location || '').toLowerCase();
     
-    // Siempre aceptar trabajos 100% remotos
+    // Si la oferta es remota, verificar que también sea de un país LATAM o worldwide
     if (job.isRemote === true || location.includes('remote') || location.includes('remoto')) {
-      return true;
+      // Aceptar si no especifica país (worldwide) o si menciona LATAM
+      if (!location || 
+          location.includes('worldwide') || 
+          location.includes('anywhere') ||
+          location.includes('global') ||
+          location.includes('latam') ||
+          location.includes('latin america') ||
+          location.includes('latinoamérica')) {
+        return true;
+      }
+      
+      // Si especifica país, debe ser LATAM
+      return allowedCountries.some(country => location.includes(country));
     }
     
-    // Verificar si la ubicación contiene algún país permitido
+    // Para ofertas presenciales, verificar si la ubicación contiene algún país permitido
     return allowedCountries.some(country => location.includes(country));
   });
 }

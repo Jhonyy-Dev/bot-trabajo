@@ -874,11 +874,28 @@ app.post('/send-job-offer', async (req, res) => {
     console.log('✅ RESULTADO del envío:', result);
     res.json(result);
   } catch (error) {
-    console.error('❌ ERROR CRÍTICO en endpoint /send-job-offer:', error.message);
-    res.status(500).json({ 
+    console.error('❌ ERROR en endpoint /send-job-offer:', error.message);
+    
+    // Mensajes de error más específicos y amigables
+    let statusCode = 500;
+    let userMessage = error.message;
+    
+    if (error.message.includes('No se encontraron ofertas')) {
+      statusCode = 404;
+      userMessage = 'No hay ofertas Junior/Trainee disponibles en países LATAM en los últimos 30 días. Intenta más tarde.';
+    } else if (error.message.includes('ya fueron enviadas')) {
+      statusCode = 409;
+      userMessage = 'Las ofertas disponibles ya fueron enviadas anteriormente. Intenta en unas horas.';
+    } else if (error.message.includes('No hay conexión')) {
+      statusCode = 503;
+      userMessage = 'WhatsApp no está conectado. Escanea el código QR primero.';
+    }
+    
+    res.status(statusCode).json({ 
       success: false, 
-      message: 'Error interno del servidor',
-      error: error.message 
+      message: userMessage,
+      details: error.message,
+      timestamp: new Date().toISOString()
     });
   }
 });
