@@ -293,11 +293,15 @@ async function searchJobOffers(category, location = 'remote', isRemoteOnly = fal
 
   const allJobs = [];
 
+  // Solo usar JSearch que permite filtrar por país LATAM
+  // RemoteOK y Arbeitnow son de USA/Europa y no filtran por región
   const searchPromises = [
-    searchJSearchAPI(category, location),
-    searchRemoteOKAPI(category),
-    searchArbeitnowAPI(category)
+    searchJSearchAPI(category, location)
   ];
+  
+  // Descomentar si necesitas más fuentes (pero pueden traer ofertas de USA/Europa)
+  // searchRemoteOKAPI(category),
+  // searchArbeitnowAPI(category)
 
   if (process.env.USAJOBS_API_KEY) {
     searchPromises.push(searchUSAJobsAPI(category));
