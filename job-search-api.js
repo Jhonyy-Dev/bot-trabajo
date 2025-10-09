@@ -74,7 +74,7 @@ async function searchJSearchAPI(query, location = 'remote', page = 1) {
       params: {
         query: `${query} ${location}`,
         page: page,
-        num_pages: 1,
+        num_pages: 2, // Obtener 2 páginas = ~20 resultados por búsqueda
         date_posted: 'month'
       },
       headers: {
@@ -293,18 +293,27 @@ async function searchJobOffers(category, location = 'remote', isRemoteOnly = fal
 
   const allJobs = [];
 
-  // Solo usar JSearch que permite filtrar por país LATAM
-  // RemoteOK y Arbeitnow son de USA/Europa y no filtran por región
-  const searchPromises = [
-    searchJSearchAPI(category, location)
+  // TODOS los países LATAM para buscar
+  const topLatamCountries = [
+    'Mexico', 'Nicaragua', 'Guatemala', 'El Salvador', 
+    'Colombia', 'Brasil', 'Ecuador', 'Peru', 
+    'Chile', 'Argentina', 'Uruguay', 'Paraguay'
   ];
   
-  // Descomentar si necesitas más fuentes (pero pueden traer ofertas de USA/Europa)
-  // searchRemoteOKAPI(category),
-  // searchArbeitnowAPI(category)
-
-  if (process.env.USAJOBS_API_KEY) {
-    searchPromises.push(searchUSAJobsAPI(category));
+  // Buscar en múltiples ubicaciones para aumentar resultados
+  const searchPromises = [];
+  
+  if (location.toLowerCase() === 'remote') {
+    // Si busca "remote", buscar específicamente "remote Latin America"
+    searchPromises.push(searchJSearchAPI(category, 'remote Latin America'));
+    
+    // También buscar en países LATAM principales
+    topLatamCountries.forEach(country => {
+      searchPromises.push(searchJSearchAPI(category, country));
+    });
+  } else {
+    // Si especifica un país, buscar solo ahí
+    searchPromises.push(searchJSearchAPI(category, location));
   }
 
   try {
@@ -314,7 +323,7 @@ async function searchJobOffers(category, location = 'remote', isRemoteOnly = fal
       if (result.status === 'fulfilled' && result.value) {
         allJobs.push(...result.value);
       } else {
-        console.log(`⚠️ API ${index + 1} falló: ${result.reason?.message || 'Error desconocido'}`);
+        console.log(`⚠️ Búsqueda ${index + 1} falló: ${result.reason?.message || 'Error desconocido'}`);
       }
     });
 
@@ -340,6 +349,15 @@ async function searchJobOffers(category, location = 'remote', isRemoteOnly = fal
   // Filtrar por países latinoamericanos
   const latinJobs = filterJobsByLocation(juniorJobs, ALLOWED_COUNTRIES);
   console.log(`🌎 Ofertas en países permitidos: ${latinJobs.length}`);
+  
+  // Debug: mostrar ubicaciones que fueron filtradas
+  if (juniorJobs.length > latinJobs.length) {
+    const rejected = juniorJobs.filter(j => !latinJobs.includes(j));
+    console.log(`⚠️ ${rejected.length} ofertas rechazadas por ubicación:`);
+    rejected.slice(0, 3).forEach(job => {
+      console.log(`   - "${job.title}" en "${job.location}"`);
+    });
+  }
 
   // Filtrar por antigüedad (máximo 7 días)
   const recentJobs = filterJobsByDate(latinJobs, MAX_DAYS_OLD);
@@ -376,16 +394,25 @@ function filterJobsByLocation(jobs, allowedCountries) {
   return jobs.filter(job => {
     const location = (job.location || '').toLowerCase();
     
-    // Si la oferta es remota, verificar que también sea de un país LATAM o worldwide
+    // Términos que indican LATAM o worldwide
+    const latinTerms = [
+      'latam', 'latin america', 'latinoamérica', 'latinoamerica',
+      'south america', 'sudamerica', 'sudamérica', 'central america',
+      'centroamerica', 'centroamérica', 'hispanic', 'spanish speaking'
+    ];
+    
+    // Si menciona LATAM explícitamente, aceptar
+    if (latinTerms.some(term => location.includes(term))) {
+      return true;
+    }
+    
+    // Si la oferta es remota
     if (job.isRemote === true || location.includes('remote') || location.includes('remoto')) {
-      // Aceptar si no especifica país (worldwide) o si menciona LATAM
+      // Aceptar worldwide/global/anywhere (sin restricción de país)
       if (!location || 
           location.includes('worldwide') || 
           location.includes('anywhere') ||
-          location.includes('global') ||
-          location.includes('latam') ||
-          location.includes('latin america') ||
-          location.includes('latinoamérica')) {
+          location.includes('global')) {
         return true;
       }
       
