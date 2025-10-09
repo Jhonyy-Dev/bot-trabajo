@@ -38,7 +38,7 @@ function validateConfiguration() {
   console.log('✅ Configuración validada correctamente');
   console.log('💼 Bot de Ofertas Laborales - Sistema Híbrido');
   console.log(`🎯 Grupo objetivo: ${process.env.TARGET_GROUP_NAME}`);
-  console.log('🔄 APIs: RemoteOK, Arbeitnow' + (process.env.RAPIDAPI_KEY ? ', JSearch (LinkedIn/Indeed)' : '') + (process.env.USAJOBS_API_KEY ? ', USAJOBS' : ''));
+  console.log('🔄 APIs: GetOnBrd (LATAM)' + (process.env.RAPIDAPI_KEY ? ', JSearch (LinkedIn/Indeed)' : '') + (process.env.USAJOBS_API_KEY ? ', USAJOBS' : ''));
 }
 
 // Ejecutar validación al inicio

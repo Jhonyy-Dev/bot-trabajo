@@ -224,7 +224,60 @@ async function searchArbeitnowAPI(category) {
 }
 
 /**
- * 4. USAJOBS API - Gobierno USA (opcional)
+ * 4. GetOnBrd API - Empleos Tech LATAM
+ */
+async function searchGetOnBrdAPI(category) {
+  try {
+    console.log(`🔍 Buscando en GetOnBrd API: ${category}`);
+    
+    // GetOnBrd tiene una API pública
+    const response = await axios.get('https://www.getonbrd.com/api/v0/categories/programming/jobs', {
+      timeout: 10000,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; JobBot/1.0)',
+        'Accept': 'application/json'
+      }
+    });
+
+    if (!response.data || !response.data.data) {
+      console.log('❌ GetOnBrd API: Sin resultados');
+      return [];
+    }
+
+    const categoryKeywords = JOB_CATEGORIES[category.toUpperCase()] || [category];
+    const jobs = response.data.data
+      .filter(job => {
+        const fullText = `${job.attributes.title} ${job.attributes.description || ''}`.toLowerCase();
+        return categoryKeywords.some(keyword => fullText.includes(keyword.toLowerCase()));
+      })
+      .slice(0, 15)
+      .map(job => ({
+        title: job.attributes.title,
+        company: job.attributes.company?.data?.attributes?.name || 'Empresa no especificada',
+        location: job.attributes.remote ? 'Remote LATAM 🌎' : (job.attributes.country || 'LATAM'),
+        salary: job.attributes.max_salary 
+          ? `${job.attributes.min_salary || 0} - ${job.attributes.max_salary} USD`
+          : 'No especificado',
+        link: `https://www.getonbrd.com/jobs/${job.attributes.slug}`,
+        description: job.attributes.description || '',
+        postedDate: job.attributes.published_at || new Date().toISOString(),
+        source: 'GetOnBrd',
+        isRemote: job.attributes.remote || false,
+        employmentType: job.attributes.modality === 'full_time' ? 'FULLTIME' : 'CONTRACT',
+        tags: job.attributes.tags || []
+      }));
+
+    console.log(`✅ GetOnBrd API: ${jobs.length} ofertas encontradas`);
+    return jobs;
+
+  } catch (error) {
+    console.log(`⚠️ Error en GetOnBrd API: ${error.message}`);
+    return [];
+  }
+}
+
+/**
+ * 5. USAJOBS API - Gobierno USA (opcional)
  */
 async function searchUSAJobsAPI(category) {
   try {
@@ -311,9 +364,13 @@ async function searchJobOffers(category, location = 'remote', isRemoteOnly = fal
     topLatamCountries.forEach(country => {
       searchPromises.push(searchJSearchAPI(category, country));
     });
+    
+    // Agregar GetOnBrd (empleos tech LATAM)
+    searchPromises.push(searchGetOnBrdAPI(category));
   } else {
     // Si especifica un país, buscar solo ahí
     searchPromises.push(searchJSearchAPI(category, location));
+    searchPromises.push(searchGetOnBrdAPI(category));
   }
 
   try {
