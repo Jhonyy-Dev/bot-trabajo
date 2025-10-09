@@ -54,8 +54,8 @@ const ALLOWED_COUNTRIES = [
   'remote', 'remoto', 'worldwide', 'latam', 'latin america', 'latinoamérica', 'latinoamerica'
 ];
 
-// Días máximos de antigüedad permitidos
-const MAX_DAYS_OLD = 7;
+// Días máximos de antigüedad permitidos (configurable desde .env)
+const MAX_DAYS_OLD = parseInt(process.env.MAX_DAYS_OLD) || 30;
 
 /**
  * 1. JSearch API (RapidAPI) - LinkedIn, Indeed, Glassdoor
