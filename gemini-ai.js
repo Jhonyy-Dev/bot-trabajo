@@ -114,6 +114,7 @@ function generateSmartJobDescription(jobTitle, company, description, category, s
     FRONTEND: '💻',
     BACKEND: '⚙️',
     MOBILE: '📱',
+    DESIGNER: '🎨',
     DATABASE: '🗄️',
     DATA_ANALYST: '📊',
     CYBERSECURITY: '🔒'

@@ -21,7 +21,7 @@ class JobSchedulerService {
     this.lastCleanup = 0;
     
     // Categorías de empleo en rotación circular
-    this.jobCategories = ['FRONTEND', 'BACKEND', 'MOBILE', 'DATABASE', 'DATA_ANALYST', 'CYBERSECURITY'];
+    this.jobCategories = ['FRONTEND', 'BACKEND', 'MOBILE', 'DESIGNER', 'DATABASE', 'DATA_ANALYST', 'CYBERSECURITY'];
     this.currentCategoryIndex = 0;
     
     // Ubicaciones en rotación circular

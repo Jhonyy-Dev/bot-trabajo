@@ -20,7 +20,10 @@ const JOB_CATEGORIES = {
     'react native developer', 'desarrollador react native', 'flutter developer', 'desarrollador flutter', 'fullstack developer', 'desarrollador fullstack', 'fullstack', 'mobile developer', 'desarrollador móvil', 'desarrollador mobile'
   ],
   DESIGNER: [
-    'ui/ux designer', 'diseñador ui/ux', 'ui designer', 'diseñador ui', 'ux designer', 'diseñador ux', 'fullstack developer', 'desarrollador fullstack', 'fullstack', 'ui/ux designer', 'diseñador ui/ux', 'ui designer', 'diseñador ui', 'ux designer', 'diseñador ux', 'designer', 'diseñador'
+    'graphic designer', 'diseñador gráfico', 'ui/ux designer', 'diseñador ui/ux', 
+    'ui designer', 'diseñador ui', 'ux designer', 'diseñador ux',
+    'product designer', 'diseñador de producto', 'visual designer', 'diseñador visual',
+    'web designer', 'diseñador web', 'designer', 'diseñador'
   ],
   DATABASE: [
     'database administrator', 'administrador de base de datos', 'dba', 
