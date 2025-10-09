@@ -24,10 +24,23 @@ class JobSchedulerService {
     this.jobCategories = ['FRONTEND', 'BACKEND', 'MOBILE', 'DESIGNER', 'DATABASE', 'DATA_ANALYST', 'CYBERSECURITY'];
     this.currentCategoryIndex = 0;
     
-    // Ubicaciones en rotación circular
-    const envLocations = process.env.JOB_LOCATIONS?.split(',').map(l => l.trim()) || ['remote'];
-    this.jobLocations = envLocations.length > 0 ? envLocations : ['remote'];
+    // Ubicaciones en rotación circular - SOLO PAÍSES LATAM
+    const defaultLocations = ['remote', 'Mexico', 'Nicaragua', 'Guatemala', 'El Salvador', 'Colombia', 'Brasil', 'Ecuador', 'Peru', 'Chile', 'Argentina', 'Uruguay', 'Paraguay'];
+    const envLocations = process.env.JOB_LOCATIONS?.split(',').map(l => l.trim());
+    
+    // Filtrar ubicaciones para SOLO aceptar países LATAM + remote
+    this.jobLocations = (envLocations && envLocations.length > 0) 
+      ? envLocations.filter(loc => defaultLocations.some(allowed => allowed.toLowerCase() === loc.toLowerCase()))
+      : defaultLocations;
+    
+    // Si después del filtro no quedó nada, usar defaults
+    if (this.jobLocations.length === 0) {
+      this.jobLocations = defaultLocations;
+    }
+    
     this.currentLocationIndex = 0;
+    
+    console.log(`📍 Ubicaciones configuradas (${this.jobLocations.length}):`, this.jobLocations);
     
     JobSchedulerService.instance = this;
     this.startScheduler();
