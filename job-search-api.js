@@ -2,18 +2,57 @@
 const axios = require('axios');
 require('dotenv').config();
 
-// Categorías laborales soportadas
+// Categorías laborales soportadas (INGLÉS + ESPAÑOL)
 const JOB_CATEGORIES = {
-  FRONTEND: ['frontend developer', 'react developer', 'vue developer', 'angular developer', 'web developer'],
-  BACKEND: ['backend developer', 'node.js developer', 'python developer', 'java developer', 'api developer'],
-  MOBILE: ['mobile developer', 'ios developer', 'android developer', 'react native developer', 'flutter developer'],
-  DATABASE: ['database administrator', 'dba', 'database developer', 'sql developer'],
-  DATA_ANALYST: ['data analyst', 'business analyst', 'data scientist junior'],
-  CYBERSECURITY: ['cybersecurity analyst', 'security analyst', 'infosec analyst', 'junior security engineer']
+  FRONTEND: [
+    'frontend developer', 'desarrollador frontend', 'react developer', 'desarrollador react', 
+    'vue developer', 'desarrollador vue', 'angular developer', 'desarrollador angular', 
+    'web developer', 'desarrollador web', 'fullstack developer', 'desarrollador fullstack', 'fullstack', 'frontend developer', 'desarrollador frontend'
+  ],
+  BACKEND: [
+    'backend developer', 'desarrollador backend', 'node.js developer', 'desarrollador node.js',
+    'python developer', 'desarrollador python', 'java developer', 'desarrollador java', 
+    'api developer', 'desarrollador api', 'desarrollador de software', 'software developer', 'fullstack developer', 'desarrollador fullstack', 'fullstack', 'backend developer', 'desarrollador backend'
+  ],
+  MOBILE: [
+    'mobile developer', 'desarrollador móvil', 'desarrollador mobile', 'ios developer', 
+    'desarrollador ios', 'android developer', 'desarrollador android', 
+    'react native developer', 'desarrollador react native', 'flutter developer', 'desarrollador flutter', 'fullstack developer', 'desarrollador fullstack', 'fullstack', 'mobile developer', 'desarrollador móvil', 'desarrollador mobile'
+  ],
+  DESIGNER: [
+    'ui/ux designer', 'diseñador ui/ux', 'ui designer', 'diseñador ui', 'ux designer', 'diseñador ux', 'fullstack developer', 'desarrollador fullstack', 'fullstack', 'ui/ux designer', 'diseñador ui/ux', 'ui designer', 'diseñador ui', 'ux designer', 'diseñador ux', 'designer', 'diseñador'
+  ],
+  DATABASE: [
+    'database administrator', 'administrador de base de datos', 'dba', 
+    'database developer', 'desarrollador de base de datos', 'sql developer', 'desarrollador sql', 'fullstack developer', 'desarrollador fullstack', 'fullstack', 'database administrator', 'administrador de base de datos', 'dba'
+  ],
+  DATA_ANALYST: [
+    'data analyst', 'analista de datos', 'business analyst', 'analista de negocios',
+    'data scientist junior', 'científico de datos junior', 'ciencia de datos', 'data science', 'fullstack developer', 'desarrollador fullstack', 'fullstack', 'data analyst', 'analista de datos', 'business analyst', 'analista de negocios', 'data scientist junior', 'científico de datos junior', 'ciencia de datos', 'data science'
+  ],
+  CYBERSECURITY: [
+    'cybersecurity analyst', 'analista de ciberseguridad', 'security analyst', 'analista de seguridad',
+    'infosec analyst', 'junior security engineer', 'ingeniero de seguridad junior', 'fullstack developer', 'desarrollador fullstack', 'fullstack', 'cybersecurity analyst', 'analista de ciberseguridad', 'security analyst', 'analista de seguridad', 'infosec analyst', 'junior security engineer', 'ingeniero de seguridad junior'
+  ]
 };
 
-// Niveles de experiencia para filtrar
-const JUNIOR_KEYWORDS = ['junior', 'trainee', 'entry level', 'entry-level', 'graduate', 'jr', 'beginner', 'sin experiencia', '0-2 years', 'recién graduado'];
+// Niveles de experiencia para filtrar (INGLÉS + ESPAÑOL)
+const JUNIOR_KEYWORDS = [
+  'junior', 'trainee', 'entry level', 'entry-level', 'graduate', 'jr', 'jr.', 'beginner', 
+  'sin experiencia', '0-2 years', '0-1 year', 'recién graduado', 'practicante', 
+  'pasante', 'intern', 'internship', 'aprendiz', 'nivel inicial', 'principiante',
+  'graduado', 'fresh graduate', 'recien egresado'
+];
+
+// Países latinoamericanos permitidos
+const ALLOWED_COUNTRIES = [
+  'mexico', 'méxico', 'nicaragua', 'guatemala', 'el salvador', 'colombia', 'brasil', 'brazil',
+  'ecuador', 'peru', 'perú', 'chile', 'argentina', 'uruguay', 'paraguay',
+  'remote', 'remoto', 'worldwide', 'latam', 'latin america', 'latinoamérica', 'latinoamerica'
+];
+
+// Días máximos de antigüedad permitidos
+const MAX_DAYS_OLD = 7;
 
 /**
  * 1. JSearch API (RapidAPI) - LinkedIn, Indeed, Glassdoor
@@ -144,19 +183,33 @@ async function searchArbeitnowAPI(category) {
         return categoryKeywords.some(keyword => fullText.includes(keyword.toLowerCase()));
       })
       .slice(0, 10)
-      .map(job => ({
-        title: job.title,
-        company: job.company_name,
-        location: job.location || 'Europa',
-        salary: 'No especificado',
-        link: job.url,
-        description: job.description || '',
-        postedDate: job.created_at,
-        source: 'Arbeitnow (Europa)',
-        isRemote: job.remote || false,
-        employmentType: job.job_types?.[0] || 'FULLTIME',
-        tags: job.tags || []
-      }));
+      .map(job => {
+        // Arbeitnow usa timestamps Unix en SEGUNDOS, convertir a ISO string
+        let isoDate = new Date().toISOString();
+        try {
+          if (job.created_at) {
+            // Si es un número (timestamp Unix), multiplicar por 1000 para convertir a ms
+            const timestamp = typeof job.created_at === 'number' ? job.created_at * 1000 : job.created_at;
+            isoDate = new Date(timestamp).toISOString();
+          }
+        } catch (e) {
+          console.warn('Error parseando fecha de Arbeitnow:', e.message);
+        }
+        
+        return {
+          title: job.title,
+          company: job.company_name,
+          location: job.location || 'Europa',
+          salary: 'No especificado',
+          link: job.url,
+          description: job.description || '',
+          postedDate: isoDate,
+          source: 'Arbeitnow (Europa)',
+          isRemote: job.remote || false,
+          employmentType: job.job_types?.[0] || 'FULLTIME',
+          tags: job.tags || []
+        };
+      });
 
     console.log(`✅ Arbeitnow API: ${jobs.length} ofertas encontradas`);
     return jobs;
@@ -273,12 +326,21 @@ async function searchJobOffers(category, location = 'remote', isRemoteOnly = fal
   const uniqueJobs = removeDuplicateJobs(filteredJobs);
   console.log(`✅ Ofertas únicas (sin duplicados): ${uniqueJobs.length}`);
 
+  // Filtrar por Junior/Trainee
   const juniorJobs = filterJobsByLevel(uniqueJobs, JUNIOR_KEYWORDS);
   console.log(`👶 Ofertas nivel junior/trainee: ${juniorJobs.length}`);
 
-  juniorJobs.sort((a, b) => new Date(b.postedDate) - new Date(a.postedDate));
+  // Filtrar por países latinoamericanos
+  const latinJobs = filterJobsByLocation(juniorJobs, ALLOWED_COUNTRIES);
+  console.log(`🌎 Ofertas en países permitidos: ${latinJobs.length}`);
 
-  return juniorJobs;
+  // Filtrar por antigüedad (máximo 7 días)
+  const recentJobs = filterJobsByDate(latinJobs, MAX_DAYS_OLD);
+  console.log(`📅 Ofertas recientes (últimos ${MAX_DAYS_OLD} días): ${recentJobs.length}`);
+
+  recentJobs.sort((a, b) => new Date(b.postedDate) - new Date(a.postedDate));
+
+  return recentJobs;
 }
 
 /**
@@ -297,6 +359,49 @@ function filterJobsByLevel(jobs, keywords) {
     const hasSeniorKeyword = /senior|lead|principal|staff|expert|architect/i.test(fullText);
 
     return (hasJuniorKeyword || hasLowExperience) && !hasSeniorKeyword;
+  });
+}
+
+/**
+ * Filtra ofertas por ubicación (países latinoamericanos)
+ */
+function filterJobsByLocation(jobs, allowedCountries) {
+  return jobs.filter(job => {
+    const location = (job.location || '').toLowerCase();
+    
+    // Siempre aceptar trabajos 100% remotos
+    if (job.isRemote === true || location.includes('remote') || location.includes('remoto')) {
+      return true;
+    }
+    
+    // Verificar si la ubicación contiene algún país permitido
+    return allowedCountries.some(country => location.includes(country));
+  });
+}
+
+/**
+ * Filtra ofertas por antigüedad (máximo N días)
+ */
+function filterJobsByDate(jobs, maxDays) {
+  return jobs.filter(job => {
+    try {
+      if (!job.postedDate) return false;
+      
+      const postedTime = new Date(job.postedDate).getTime();
+      const now = Date.now();
+      const diffMs = now - postedTime;
+      const diffDays = diffMs / (1000 * 60 * 60 * 24);
+      
+      // Rechazar fechas inválidas o futuras
+      if (isNaN(diffDays) || diffDays < 0 || diffDays > maxDays) {
+        return false;
+      }
+      
+      return true;
+    } catch (e) {
+      console.warn('Error validando fecha:', e.message);
+      return false;
+    }
   });
 }
 
@@ -340,7 +445,12 @@ function getJobStatistics(jobs) {
 module.exports = {
   searchJobOffers,
   filterJobsByLevel,
+  filterJobsByLocation,
+  filterJobsByDate,
   removeDuplicateJobs,
   getJobStatistics,
-  JOB_CATEGORIES
+  JOB_CATEGORIES,
+  JUNIOR_KEYWORDS,
+  ALLOWED_COUNTRIES,
+  MAX_DAYS_OLD
 };
