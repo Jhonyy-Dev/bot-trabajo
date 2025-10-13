@@ -402,14 +402,14 @@ app.get('/old-dashboard', (req, res) => {
 // Ruta para obtener el código QR
 app.get('/qr', async (req, res) => {
   try {
-    if (qrString && typeof qrString === 'string' && qrString.length > 0 && qrString.length < 2000) {
-      const qrDataUrl = await qrcode.toDataURL(qrString);
-      res.json({ success: true, qr: qrDataUrl });
+    // qrString ya es un Data URL (base64), solo validar que existe y empieza con 'data:image'
+    if (qrString && typeof qrString === 'string' && qrString.startsWith('data:image')) {
+      res.json({ success: true, qr: qrString });
     } else {
       res.json({ success: false, message: 'No hay código QR disponible' });
     }
   } catch (error) {
-    console.error('Error generando QR:', error);
+    console.error('Error enviando QR:', error);
     qrString = ''; // Limpiar QR corrupto
     res.status(500).json({ success: false, message: 'Error generando QR' });
   }
