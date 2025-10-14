@@ -128,6 +128,14 @@ async function cleanupOldSessionFiles() {
     const path = require('path');
     const authDir = path.join(process.cwd(), 'auth');
     
+    // Verificar si el directorio existe antes de intentar leerlo
+    try {
+      await fs.access(authDir);
+    } catch {
+      // El directorio no existe, no hay nada que limpiar
+      return;
+    }
+    
     const files = await fs.readdir(authDir);
     const sessionFiles = files.filter(file => file.startsWith('session-') && file.endsWith('.json'));
     
@@ -146,18 +154,29 @@ async function cleanupOldSessionFiles() {
       console.log(`🗑️ Archivos de sesión limpiados (${filesToDelete.length} archivos)`);
     }
   } catch (error) {
-    // Silencioso - no afectar funcionamiento
+    console.log('⚠️ Error al limpiar archivos de sesión (no crítico):', error.message);
   }
 }
 
 // Función para inicializar el cliente de WhatsApp con Baileys
 async function initializeWhatsApp() {
   try {
+    console.log('🔄 Inicializando WhatsApp...');
+    
+    // Asegurar que el directorio auth existe
+    const authDir = path.join(__dirname, 'auth');
+    if (!fs.existsSync(authDir)) {
+      fs.mkdirSync(authDir, { recursive: true });
+      console.log('📁 Directorio auth creado');
+    }
+    
     // Limpiar archivos de sesión antiguos antes de iniciar
     await cleanupOldSessionFiles();
     
     const { state, saveCreds } = await useMultiFileAuthState('auth');
     authState = { state, saveCreds };
+    
+    console.log('✅ Estado de autenticación cargado');
     
     sock = makeWASocket({
       auth: state,
@@ -198,9 +217,18 @@ async function initializeWhatsApp() {
     sock.ev.on('connection.update', async (update) => {
       const { connection, lastDisconnect, qr } = update;
       
+      // Log detallado del estado de conexión
+      console.log(`📡 Connection update: ${connection || 'N/A'}`, {
+        hasQR: !!qr,
+        statusCode: lastDisconnect?.error?.output?.statusCode,
+        errorMessage: lastDisconnect?.error?.message
+      });
+      
       if (qr) {
+        console.log('📱 Generando código QR...');
         qrString = await qrcode.toDataURL(qr);
         qrGeneratedAt = Date.now();
+        console.log('✅ Código QR generado exitosamente');
         
         // Limpiar timeout anterior si existe
         if (qrTimeout) {
@@ -214,6 +242,11 @@ async function initializeWhatsApp() {
       if (connection === 'close') {
         const shouldReconnect = (lastDisconnect?.error)?.output?.statusCode !== DisconnectReason.loggedOut;
         const statusCode = (lastDisconnect?.error)?.output?.statusCode;
+        
+        console.log(`❌ Conexión cerrada - Código: ${statusCode}`, {
+          shouldReconnect,
+          error: lastDisconnect?.error?.message
+        });
         
         // Limpiar referencia global inmediatamente
         global.waSocket = null;
@@ -377,14 +410,23 @@ async function initializeWhatsApp() {
 
     sock.ev.on('creds.update', authState.saveCreds);
     
+    console.log('✅ WhatsApp inicializado - Esperando QR o conexión automática...');
+    
     // Limpiar archivos de sesión cada 12 horas para mantener memoria controlada
     setInterval(async () => {
       await cleanupOldSessionFiles();
     }, 12 * 60 * 60 * 1000);
     
   } catch (error) {
-    console.error('Error inicializando cliente WhatsApp:', error);
+    console.error('❌ ERROR CRÍTICO inicializando WhatsApp:', error);
+    console.error('Stack trace:', error.stack);
     connectionStatus = 'error';
+    
+    // Reintentar después de 30 segundos si falla la inicialización
+    setTimeout(() => {
+      console.log('🔄 Reintentando inicialización...');
+      initializeWhatsApp();
+    }, 30000);
   }
 
 }
@@ -1023,8 +1065,8 @@ app.get('/events', (req, res) => {
   });
 });
 
-// Limpiar archivos de autenticación al inicio para forzar nuevo QR
-cleanAuthFiles();
+// NO limpiar archivos auth al inicio - dejar que Baileys use sesión existente o genere QR nuevo
+// Solo se limpian en logout manual (/logout) o refresh QR (/refresh-qr)
 
 // Inicializar WhatsApp y servidor
 initializeWhatsApp();
